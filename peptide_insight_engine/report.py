@@ -11,6 +11,7 @@ import json
 
 from .models import Patient, PeptideEvaluation, Category, Flag
 from .patient_profile import build_profile
+from .summary import build_summary
 
 _FLAG_TAG = {Flag.GREEN: "[GREEN] ", Flag.YELLOW: "[YELLOW]", Flag.RED: "[RED]   "}
 
@@ -38,6 +39,29 @@ def render_report(patient: Patient, evaluation: PeptideEvaluation) -> str:
     L.append(f"WHO THIS PATIENT IS: {', '.join(prof.archetypes)}")
     L.append(f"OVERALL: {evaluation.overall_flag.value.upper()}")
     L.append("=" * 78)
+
+    # --- plain-language summary first (the "informative & helpful" part) ---
+    s = build_summary(evaluation)
+    L.append("")
+    L.append("BOTTOM LINE")
+    L.append(f"  {s.bottom_line}")
+    if s.reasons:
+        L.append("")
+        L.append("WHY")
+        for r in s.reasons:
+            L.append(f"  - {r}")
+    if s.next_steps:
+        L.append("")
+        L.append("WHAT TO DO NEXT")
+        for n, step in enumerate(s.next_steps, 1):
+            L.append(f"  {n}. {step}")
+    if s.response_line:
+        L.append("")
+        L.append("WILL IT WORK?")
+        L.append(f"  {s.response_line}")
+    L.append("")
+    L.append("-" * 78)
+    L.append("FULL DETAIL")
 
     for cat in _CATEGORY_ORDER:
         items = evaluation.by_category(cat)
@@ -70,4 +94,12 @@ def render_report(patient: Patient, evaluation: PeptideEvaluation) -> str:
 
 
 def to_json(evaluation: PeptideEvaluation, indent: int = 2) -> str:
-    return json.dumps(evaluation.to_dict(), indent=indent)
+    s = build_summary(evaluation)
+    payload = evaluation.to_dict()
+    payload["summary"] = {
+        "bottom_line": s.bottom_line,
+        "reasons": s.reasons,
+        "next_steps": s.next_steps,
+        "response_line": s.response_line,
+    }
+    return json.dumps(payload, indent=indent)

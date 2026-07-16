@@ -1,0 +1,22 @@
+{
+  "patient": {
+    "patient_id": "SUBMISSION-001",
+    "age": 61,
+    "sex": "M",
+    "weight_kg": 104,
+    "height_cm": 178,
+    "conditions": ["type_2_diabetes", "diabetic_retinopathy", "cardiovascular_disease"],
+    "medications": ["insulin", "sulfonylurea", "warfarin"],
+    "family_history": [],
+    "genetics": {"GLP1R_effect": 1, "GIPR_risk": 1}
+  },
+  "peptides": ["glp1"],
+  "labs": [
+    {"name": "Hemoglobin A1c", "value": 9.4, "unit": "%"},
+    {"name": "Lipase", "value": 48, "unit": "U/L"},
+    {"name": "C-Peptide", "value": 0.5, "unit": "ng/mL"},
+    {"name": "eGFR", "value": 54, "unit": "mL/min/1.73m2"},
+    {"name": "Triglycerides", "value": 210, "unit": "mg/dL"},
+    {"name": "Resting HR", "value": 105, "unit": "bpm"}
+  ]
+}

@@ -22,7 +22,30 @@ secretagogues, and BPC-157.**
 
 ## Quick start
 
-From this folder (the one containing `peptide_insight_engine/`):
+Three ways to run it, from this folder (the one containing `peptide_insight_engine/`):
+
+**1. Submit a blood test** (the main workflow)
+
+```bash
+# self-contained JSON submission (patient context + labs + peptide)
+python3 submit_bloodtest.py sample_submission.json
+
+# or a plain lab CSV + demographics on the command line
+python3 submit_bloodtest.py sample_bloodtest.csv \
+    --age 61 --sex M --weight 104 --height 178 \
+    --conditions type_2_diabetes,diabetic_retinopathy \
+    --meds insulin,sulfonylurea,warfarin --peptide glp1
+
+python3 submit_bloodtest.py sample_submission.json --json   # machine-readable
+```
+
+**2. Answer questions interactively**
+
+```bash
+python3 intake.py
+```
+
+**3. Run the 10 built-in example patients**
 
 ```bash
 python3 run_demo.py                 # text reports for 10 sample patients
@@ -31,6 +54,37 @@ python3 run_demo.py --json          # structured JSON output for EMR/API use
 ```
 
 No dependencies — pure Python 3.9+ standard library.
+
+### Submitting a blood test
+
+`submit_bloodtest.py` takes a real lab file and runs the engine on it. The
+parser (`peptide_insight_engine/bloodtest.py`):
+
+- **maps real-world lab names** to the engine's keys — "Hemoglobin A1c", "A1C",
+  "HgbA1c", "glycated hemoglobin" all become `hba1c`;
+- **converts common units** — e.g. HbA1c `mmol/mol` → `%`, glucose `mmol/L` →
+  `mg/dL` — so numbers land in the expected ranges;
+- **tells you what it couldn't map** instead of silently dropping it (submit
+  `sample_bloodtest.csv` and you'll see "Vitamin D" reported as unmapped).
+
+A blood test alone has no age/sex/medications, which the reasoning needs — so
+you supply that context either in the JSON submission's `patient` block or via
+the CSV command-line flags.
+
+### What comes back (informative output)
+
+Every report now leads with a plain-language summary before the clinical detail:
+
+```
+BOTTOM LINE      one-line verdict (NOT RECOMMENDED / WITH CAUTION / NO BLOCKERS)
+WHY              the top reasons, in plain English
+WHAT TO DO NEXT  a consolidated, de-duplicated action list
+WILL IT WORK?    the response prediction, interpreted ("above-average", etc.)
+---
+FULL DETAIL      the grouped, fully-sourced clinical findings
+```
+
+The plain-language layer lives in `peptide_insight_engine/summary.py`.
 
 Minimal programmatic use:
 
@@ -190,8 +244,14 @@ engine enforces this by skipping the predictor whenever the overall flag is RED.
 
 | File | What it is |
 |------|-----------|
-| `peptide_insight_engine/` | The engine (this README describes it). |
+| `submit_bloodtest.py` | **Submit a blood test (CSV or JSON) and get a report.** |
+| `intake.py` | Interactive Q&A intake — answer prompts, get a report. |
 | `run_demo.py` | Runs the engine over 10 diverse sample patients. |
+| `sample_submission.json` | Example self-contained blood-test submission. |
+| `sample_bloodtest.csv` | Example plain lab CSV (includes an unmappable row). |
+| `peptide_insight_engine/` | The engine (this README describes it). |
+| `peptide_insight_engine/bloodtest.py` | Lab-file parser: name synonyms + unit conversion. |
+| `peptide_insight_engine/summary.py` | Plain-language bottom-line / next-steps layer. |
 | `peptide_insight_engine/sample_patients.py` | The 10 patients (healthy → complex diabetic → contraindicated → pregnant → elderly). |
 | `Peptide_Readiness_Model_Design.md` | The design/strategy document: feasibility research, three-tier product, validation, and CLIA/FDA regulatory posture. |
 | `peptide_readiness_engine.py` | The earlier single-file prototype (superseded by the package; kept for reference). |
